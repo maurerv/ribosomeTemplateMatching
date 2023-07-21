@@ -3,6 +3,7 @@ library(ggplot2)
 library(clue)
 library(parallel)
 library(colorspace)
+library(cowplot)
 
 setwd("/Users/vmaurer/src/ribosomeSpheres")
 
@@ -126,6 +127,7 @@ p2 = ggplot(plot_data, aes(x = name, y = precision, group = Class, color = Class
   theme_bw(base_size = FONT_SIZE)+
   xlab("Template radius [Voxel]")+
   scale_y_continuous(labels = scales::percent)+
+  scale_x_continuous(breaks = c(min(plot_data$name), 5, 10, 15, max(plot_data$name)))+
   ylab("Precision")+
   theme(legend.position = "bottom")
 
@@ -152,7 +154,7 @@ p4 = ggplot(estimates, aes(x = true_positivesRibosome / nrow(ground_truth),
                                     limits = c(min(estimates$name), max(estimates$name)),
                                     breaks = c(min(estimates$name), 5, 10, 15, max(estimates$name))
   )+
-  scale_y_continuous(labels = scales::percent)+
+  scale_y_continuous(labels = scales::percent, limits = c(0, .6))+
   scale_x_continuous(labels = scales::percent)+
   facet_grid(~Class)+
   xlab("Sampled Recall FAS")+
@@ -211,7 +213,14 @@ p6 = ggplot(radialAverages[bin < 10], aes(x = bin, y = value, color = Class))+
 p6
 ggsave("/Users/vmaurer/src/ribosomeSpheres/plots/radialAverages.pdf",
        p6, width = 8, height = 6)
+
+lgd = cowplot::get_legend(p6)
+middle = cowplot::plot_grid(plotlist = list(
+  p2 + theme(legend.position = "None"), 
+  p6+ theme(legend.position = "None")), labels = c("B", "C"), label_size = 20, ncol = 2
+)
+middleTotal = cowplot::plot_grid(plotlist = list(middle, lgd), nrow = 2, rel_heights = c(.9, .1))
 middle = cowplot::plot_grid(plotlist = list(p2, p6), labels = c("B", "C"), label_size = 20)
-total = cowplot::plot_grid(plotlist = list(upper, middle, lower), nrow = 3, labels = NA)
-ggsave("/Users/vmaurer/src/ribosomeSpheres/plots/templateMatchingRibosomeTotal.pdf",
+total = cowplot::plot_grid(plotlist = list(upper, middleTotal, lower), nrow = 3, labels = NA)
+cowplot::ggsave2("/Users/vmaurer/src/ribosomeSpheres/plots/templateMatchingRibosomeTotal.pdf",
        total, width = 16, height = 18)
