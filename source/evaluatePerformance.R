@@ -120,8 +120,8 @@ plot_data = estimates[
 plot_data[, recall := tp / nrow(ground_truth), by = .(Class, name)]
 plot_data[, precision := tp / (tp + fp), by = .(Class, name)]
 p2 = ggplot(plot_data, aes(x = name, y = precision, group = Class, color = Class))+
-  geom_point()+
-  geom_line()+
+  geom_point(size = 3)+
+  geom_line(linewidth = 1.5)+
   ylab("true postives")+
   scale_color_brewer(name = "Template", palette = "Set1")+
   theme_bw(base_size = FONT_SIZE)+
@@ -133,8 +133,8 @@ p2 = ggplot(plot_data, aes(x = name, y = precision, group = Class, color = Class
 
 p3 = ggplot(plot_data[tp > 0, mean(tp), by = .(Class, name)], 
             aes(x = name, y = V1, group = Class, color = Class))+
-  geom_point()+
-  geom_line()+
+  geom_point(size = 3)+
+  geom_line(linewidth = 1.5)+
   ylab("true postives")+
   scale_color_brewer(name = "Template", palette = "Set1")+
   theme_bw(base_size = FONT_SIZE)+
@@ -178,10 +178,19 @@ ggsave("/Users/vmaurer/src/ribosomeSpheres/plots/templateMatchingRibosomeTotalPi
 radialAverages = fread("/Users/vmaurer/Desktop/radialAverages.tsv")
 bins = sort(unique(radialAverages$bin))
 vals = seq(min(bins), max(bins), .1)
+
 sphereTheory = data.table(
   class = "Sphere [Theory]", bin = vals, value = abs(besselJ(vals, nu = 1)/vals)
 )
-sphereTheory[is.na(value), value := 1]
+
+a = 10
+vals = seq(0, 0.5, .001) * 2 * pi * a
+sphereTheory = data.table(
+  class = "Sphere [Theory]", bin = vals, 
+  value = 4 * pi * a ** 3 * abs(besselJ(vals, nu = 1)/vals)
+)
+max_value = max(sphereTheory$value, na.rm = T)
+sphereTheory[is.na(value), value := max_value]
 # rectangleTheory = data.table(
 #   class = "Rectangle [Theory]", bin = vals, value = abs(besselJ(vals, nu = 0)**3)
 # )
@@ -198,10 +207,15 @@ radialAverages[, Linetype := factor(class,
                                  levels = c("ribosome", "sphere", "emoji", "Sphere [Theory]", "Rectangle [Theory]"), 
                                  labels = c("Practical", "Practical", "Practical", "Theory", "Theory"))
 ]
-p6 = ggplot(radialAverages[bin < 10], aes(x = bin, y = value, color = Class))+
-  geom_line(mapping = aes(linetype = Linetype))+
-  # geom_line()+
-  geom_point()+
+radialAverages[grepl(pattern = "theory", ignore.case = T, class), Linewidth := 1.5]
+radialAverages[!grepl(pattern = "theory", ignore.case = T, class), Linewidth := 1]
+plot_data = radialAverages[bin < 10]
+p6 = ggplot(plot_data, aes(x = bin, y = value, color = Class))+
+  geom_line(data = plot_data[!grepl(pattern = "theory", ignore.case = T, class)],
+            linewidth = 1)+
+  geom_line(data = plot_data[grepl(pattern = "theory", ignore.case = T, class)],
+            linetype = "twodash", linewidth = 2)+
+  geom_point(data = plot_data[!grepl(pattern = "theory", ignore.case = T, class)], size = 3)+
   scale_color_brewer(name = "Template", palette = "Set1")+
   ylab("Power spectrum average")+
   xlab("Radius [Voxel]")+
