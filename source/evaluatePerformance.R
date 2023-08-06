@@ -9,6 +9,9 @@ setwd("/Users/vmaurer/src/ribosomeSpheres")
 
 FONT_SIZE = 20
 DISTANCE_CUTOFF = 20
+levels = c("emd3228", "sphere", "emoji")
+labels = c("Ribosome (EMD-3228)", "Sphere", "Emoji")
+
 
 ground_truth = fread("particle_lists/TS_037_cyto_ribosomes.csv")
 fas_particles = fread("particle_lists/TS_037_fas.csv")
@@ -20,6 +23,7 @@ colnames(total_particles) = c("x", "y", "z")
 classes = c(rep("Ribosome", nrow(ground_truth)), rep("FAS", nrow(fas_particles)))
 
 estimate_paths = list.files("templates",recursive = T, full.names = T, pattern = "coordinates.tsv")
+estimate_paths = estimate_paths[grepl(pattern = "emd", estimate_paths)]
 
 estimates = mclapply(estimate_paths, function(estimate_path){
   estimate = fread(estimate_path)
@@ -69,15 +73,17 @@ estimates = mclapply(estimate_paths, function(estimate_path){
   estimate
 }, mc.cores = 8)
 estimates = rbindlist(estimates)
-# fwrite(estimates, "/Users/vmaurer/src/ribosomeSpheres/mappings.csv")
 
-estimates = fread("/Users/vmaurer/src/ribosomeSpheres/mappings.csv")
+# estimatesTotal = fread("/Users/vmaurer/src/ribosomeSpheres/mappings.csv")
+# keep = colnames(estimates)
+# estimates = rbind(estimates, estimatesTotal[, ..keep])
+# fwrite(estimates, "/Users/vmaurer/src/ribosomeSpheres/mappingsNew.csv")
+
+estimates = fread("/Users/vmaurer/src/ribosomeSpheres/mappingsNew.csv")
 
 estimates[, name := as.numeric(name)]
-estimates[, Class := factor(group, 
-                            levels = c("7p6z", "sphere", "emoji"), 
-                            labels = c("Ribosome (7p6z)", "Sphere", "Emoji"))
-]
+estimates[, Class := factor(group, levels = levels, labels = labels)]
+estimates = estimates[!is.na(Class)]
 
 estimates[is.na(distance), distance := DISTANCE_CUTOFF * 10]
 estimates[is.na(distanceBoth), distanceBoth := DISTANCE_CUTOFF * 10]
@@ -201,7 +207,7 @@ radialAverages[, value := (value - min(value))/(max(value) - min(value)), by = c
 
 radialAverages[, Class := factor(class, 
                                  levels = c("ribosome", "sphere", "emoji", "Sphere [Theory]", "Rectangle [Theory]"), 
-                                 labels = c("Ribosome (7p6z)", "Sphere", "Emoji", "Sphere [Theory]", "Rectangle [Theory]"))
+                                 labels = c("Ribosome (EMD-3228)", "Sphere", "Emoji", "Sphere [Theory]", "Rectangle [Theory]"))
 ]
 radialAverages[, Linetype := factor(class, 
                                  levels = c("ribosome", "sphere", "emoji", "Sphere [Theory]", "Rectangle [Theory]"), 

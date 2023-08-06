@@ -9,7 +9,7 @@ from dge.fitter_utils import create_mask
 
 BASEDIR = "/g/kosinski/vmaurer/ribosomePaper/templates"
 TARGET_PATH = "/g/kosinski/vmaurer/ribosomePaper/targets/TS_037.mrc"
-BASEDIR = "/Users/vmaurer/src/ribosomeSpheres/templates"
+# BASEDIR = "/Users/vmaurer/src/ribosomeSpheres/templates"
 
 def make_jobxml(target : str, template : str, template_mask : str,
     outdir : str, angles : str = "angles_90_2.em") -> str:
@@ -65,101 +65,140 @@ if __name__ == "__main__":
 
     original = Map.from_structure(
         "../templates/7p6z.cif",
-        apix = 13.481,
+        sampling_rate = 13.481,
         keep_residues = None,
     )
     original.pad(new_shape = (51, 51, 51))
 
     radius_lower, radius_upper, run_files = 1, 20, []
-    for radius in range(radius_lower, radius_upper):
-        template = create_mask(
-            mask_type = "sphere",
-            shape = (51, 51, 51),
-            center = (25, 25, 25),
-            radius = radius
-        )
-        mask = np.ones_like(template)
-        outdir = join(BASEDIR, f"sphere_{radius}")
-        makedirs(outdir, exist_ok = True)
-        temp = Map(template, apix = 13.481, origin = (0,0,0))
-        temp.origin = deepcopy(original.origin)
-        temp.write_map(
-            join(outdir, "template.mrc")
-        )
+    # for radius in range(radius_lower, radius_upper):
+    #     template = create_mask(
+    #         mask_type = "sphere",
+    #         shape = (51, 51, 51),
+    #         center = (25, 25, 25),
+    #         radius = radius
+    #     )
+    #     mask = np.ones_like(template)
+    #     outdir = join(BASEDIR, f"sphere_{radius}")
+    #     makedirs(outdir, exist_ok = True)
+    #     temp = Map(template, sampling_rate = 13.481, origin = (0,0,0))
+    #     temp.origin = deepcopy(original.origin)
+    #     temp.to_file(
+    #         join(outdir, "template.mrc")
+    #     )
 
-        template_path = join(outdir, "template.em")
-        templateMask_path = join(outdir, "templateMask.em")
-        write_em(template_path, template)
-        write_em(templateMask_path, mask)
+    #     template_path = join(outdir, "template.em")
+    #     templateMask_path = join(outdir, "templateMask.em")
+    #     write_em(template_path, template)
+    #     write_em(templateMask_path, mask)
 
-        xml_path = join(outdir, "TM_job.xml")
-        with open(xml_path, "w", encoding = "utf-8") as ofile:
-            ofile.write(make_jobxml(
-                target = TARGET_PATH,
-                template = template_path,
-                template_mask = templateMask_path,
-                outdir = outdir
-            ))
-        sbatch_file = join(outdir, "TM_submit_CPU.sbatch")
-        with open(sbatch_file, "w", encoding = "utf-8") as ofile:
-            ofile.write(make_sbatch(
-                outpath = outdir,
-                xml_path = xml_path
-            ))
-        run_files.append(f"sbatch {sbatch_file}\n")
+    #     xml_path = join(outdir, "TM_job.xml")
+    #     with open(xml_path, "w", encoding = "utf-8") as ofile:
+    #         ofile.write(make_jobxml(
+    #             target = TARGET_PATH,
+    #             template = template_path,
+    #             template_mask = templateMask_path,
+    #             outdir = outdir
+    #         ))
+    #     sbatch_file = join(outdir, "TM_submit_CPU.sbatch")
+    #     with open(sbatch_file, "w", encoding = "utf-8") as ofile:
+    #         ofile.write(make_sbatch(
+    #             outpath = outdir,
+    #             xml_path = xml_path
+    #         ))
+    #     run_files.append(f"sbatch {sbatch_file}\n")
 
-    for radius in range(radius_lower, radius_upper):
-        template = Map.from_file("../templates/volume.mrc")
-        resampling_rate = np.min(np.divide(template.box_size, 2*radius))
-        template = template.resample(resampling_rate)
-        template.pad(new_shape = (51, 51, 51))
-        template.origin = deepcopy(original.origin)
-        template.apix = 13.481
-        template.write_map(join(outdir, "template.mrc"))
-        template = template.fullMap
+    # for radius in range(radius_lower, radius_upper):
+    #     template = Map.from_file("../templates/volume.mrc")
+    #     resampling_rate = np.min(np.divide(template.box_size, 2*radius))
+    #     template = template.resample(resampling_rate)
+    #     template.pad(new_shape = (51, 51, 51))
+    #     template.origin = deepcopy(original.origin)
+    #     template.sampling_rate = (13.481, 13.481, 13.481)
+    #     template.to_file(join(outdir, "template.mrc"))
+    #     template = template.data
 
-        mask = np.ones_like(template)
-        outdir = join(BASEDIR, f"emoji_{radius}")
-        makedirs(outdir, exist_ok = True)
+    #     mask = np.ones_like(template)
+    #     outdir = join(BASEDIR, f"emoji_{radius}")
+    #     makedirs(outdir, exist_ok = True)
 
-        template_path = join(outdir, "template.em")
-        templateMask_path = join(outdir, "templateMask.em")
-        write_em(template_path, template)
-        write_em(templateMask_path, mask)
+    #     template_path = join(outdir, "template.em")
+    #     templateMask_path = join(outdir, "templateMask.em")
+    #     write_em(template_path, template)
+    #     write_em(templateMask_path, mask)
 
-        xml_path = join(outdir, "TM_job.xml")
-        with open(xml_path, "w", encoding = "utf-8") as ofile:
-            ofile.write(make_jobxml(
-                target = TARGET_PATH,
-                template = template_path,
-                template_mask = templateMask_path,
-                outdir = outdir,
-                angles = "angles_25.25_980.em"
-            ))
-        sbatch_file = join(outdir, "TM_submit_CPU.sbatch")
-        with open(sbatch_file, "w", encoding = "utf-8") as ofile:
-            ofile.write(make_sbatch(
-                outpath = outdir,
-                xml_path = xml_path
-            ))
-        run_files.append(f"sbatch {sbatch_file}\n")
+    #     xml_path = join(outdir, "TM_job.xml")
+    #     with open(xml_path, "w", encoding = "utf-8") as ofile:
+    #         ofile.write(make_jobxml(
+    #             target = TARGET_PATH,
+    #             template = template_path,
+    #             template_mask = templateMask_path,
+    #             outdir = outdir,
+    #             angles = "angles_25.25_980.em"
+    #         ))
+    #     sbatch_file = join(outdir, "TM_submit_CPU.sbatch")
+    #     with open(sbatch_file, "w", encoding = "utf-8") as ofile:
+    #         ofile.write(make_sbatch(
+    #             outpath = outdir,
+    #             xml_path = xml_path
+    #         ))
+    #     run_files.append(f"sbatch {sbatch_file}\n")
 
+    # for radius in range(radius_lower, radius_upper):
+    #     resampling_rate = 20 * 13.481 / (2 * radius)
+    #     template = Map.from_structure(
+    #         "../templates/7p6z.cif",
+    #         sampling_rate = resampling_rate,
+    #         keep_residues = None,
+    #     )
+    #     template.pad(new_shape = (51, 51, 51))
+
+    #     template.origin = deepcopy(original.origin)
+    #     template.sampling_rate = (13.481, 13.481, 13.481)
+    #     outdir = join(BASEDIR, f"7p6z_{radius}")
+    #     makedirs(outdir, exist_ok = True)
+
+    #     template.to_file(join(outdir, "template.mrc"))
+    #     template = template.data
+
+    #     mask = np.ones_like(template)
+
+    #     template_path = join(outdir, "template.em")
+    #     templateMask_path = join(outdir, "templateMask.em")
+    #     write_em(template_path, template)
+    #     write_em(templateMask_path, mask)
+
+    #     xml_path = join(outdir, "TM_job.xml")
+    #     with open(xml_path, "w", encoding = "utf-8") as ofile:
+    #         ofile.write(make_jobxml(
+    #             target = TARGET_PATH,
+    #             template = template_path,
+    #             template_mask = templateMask_path,
+    #             outdir = outdir,
+    #             angles = "angles_25.25_980.em"
+    #         ))
+    #     sbatch_file = join(outdir, "TM_submit_CPU.sbatch")
+    #     with open(sbatch_file, "w", encoding = "utf-8") as ofile:
+    #         ofile.write(make_sbatch(
+    #             outpath = outdir,
+    #             xml_path = xml_path
+    #         ))
+    #     run_files.append(f"sbatch {sbatch_file}\n")
+
+
+    original = Map.from_file("../templates/emd_3228.map.gz",)
     for radius in range(radius_lower, radius_upper):
         resampling_rate = 20 * 13.481 / (2 * radius)
-        template = Map.from_structure(
-            "../templates/7p6z.cif",
-            apix = resampling_rate,
-            keep_residues = None,
-        )
+        template = original.resample(resampling_rate)
         template.pad(new_shape = (51, 51, 51))
 
         template.origin = deepcopy(original.origin)
-        template.apix = 13.481
-        outdir = join(BASEDIR, f"7p6z_{radius}")
+        template.sampling_rate = (13.481, 13.481, 13.481)
+        outdir = join(BASEDIR, f"emd3228_{radius}")
         makedirs(outdir, exist_ok = True)
 
-        template.write_map(join(outdir, "template.mrc"))
-        template = template.fullMap
+        template.to_file(join(outdir, "template.mrc"))
+        template = template.data
 
         mask = np.ones_like(template)
 

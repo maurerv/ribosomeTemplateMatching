@@ -4,14 +4,14 @@ from dge import Map
 templates = (
     "/Users/vmaurer/src/ribosomeSpheres/templates/emoji_10/template.mrc",
     "/Users/vmaurer/src/ribosomeSpheres/templates/sphere_10/template.mrc",
-    "/Users/vmaurer/src/ribosomeSpheres/templates/7p6z_10/template.mrc",
+    "/Users/vmaurer/src/ribosomeSpheres/templates/emd3228_10/template.mrc",
     )
 templates_class = ("emoji", "sphere", "ribosome")
 
 with open("radialAverages.tsv", "w", encoding = "utf-8") as ofile:
     ofile.write("class\tbin\tvalue\n")
     for template, template_class in zip(templates, templates_class):
-        template = Map.from_file(template).fullMap
+        template = Map.from_file(template).data
         fourier_transform = np.fft.fftshift(np.fft.fftn(template))
         fourier_spectrum = np.abs(fourier_transform)
 
@@ -31,7 +31,7 @@ with open("radialAverages.tsv", "w", encoding = "utf-8") as ofile:
     # mask = np.ones((20,20,20))
     # template = Map(mask, apix = 1, origin = (0,0,0))
     # template.pad((51,51,51))
-    # template = template.fullMap
+    # template = template.data
     # fourier_transform = np.fft.fftshift(np.fft.fftn(template))
     # fourier_spectrum = np.abs(fourier_transform)
 
