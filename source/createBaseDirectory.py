@@ -48,6 +48,7 @@ def make_jobxml(target : str, template : str, template_mask : str,
           <Score Type="FLCFScore" Value="-10000000000.0">
             <PeakPrior Smooth="-1.0" Radius="0.0" Filename=""/>
           </Score>
+          <BandPassFilter LowestFrequency="3.0" Smooth="0.0" HighestFrequency="15.0"/>
         </JobDescription>
     """)
 
@@ -124,6 +125,7 @@ if __name__ == "__main__":
             radius = radius
         )
         center = Density.center_of_mass(template).astype(int)
+        # Alternativel this should be mask_type = "box" for cube masks.
         mask = create_mask(
             mask_type = "ellipse",
             shape = (51, 51, 51),
