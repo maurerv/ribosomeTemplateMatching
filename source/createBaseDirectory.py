@@ -260,7 +260,7 @@ if __name__ == "__main__":
                 template = template_path,
                 template_mask = templateMask_path,
                 outdir = outdir,
-                angles = "angles_3_553680.em"
+                angles = "angles_11_15192.em"
             ))
         sbatch_file = join(outdir, "TM_submit.sbatch")
         with open(sbatch_file, "w", encoding = "utf-8") as ofile:

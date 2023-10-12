@@ -3,7 +3,6 @@ Repository for analyses related to ribosome spherical structures.
 ## Contents
 
 - **particle_lists**: Ground truth particle lists.
-- **templates***: Different templates used for template matching.
 - **mappings_***.csv: Picked ribosome coordinates.
 - **source**: Source code for analyses.
 - **plots**: Plots generated for publication.
