@@ -12,6 +12,16 @@ DISTANCE_CUTOFF = 20
 levels = c("emd3228", "sphere", "emoji")
 labels = c("Ribosome (EMD-3228)", "Sphere", "Emoji")
 
+levels = c("emd3228", "sphere", "emoji", "Sphere [Theory]", "Rectangle [Theory]") 
+labels = c("Ribosome (EMD-3228)", "Sphere", "Emoji", "Sphere [Theory]", "Rectangle [Theory]")
+
+colorMapping = c(
+  `Ribosome (EMD-3228)` = "#E41A1C",
+  Sphere = "#377EB8",
+  Emoji = "#4DAF4A",
+  `Sphere [Theory]` = "#984EA3" 
+)
+
 
 ground_truth = fread("particle_lists/TS_037_cyto_ribosomes.csv")
 fas_particles = fread("particle_lists/TS_037_fas.csv")
@@ -23,7 +33,7 @@ colnames(total_particles) = c("x", "y", "z")
 classes = c(rep("Ribosome", nrow(ground_truth)), rep("FAS", nrow(fas_particles)))
 
 estimate_paths = list.files("templates",recursive = T, full.names = T, pattern = "coordinates.tsv")
-estimate_paths = estimate_paths[grepl(pattern = "emd", estimate_paths)]
+estimate_paths = estimate_paths[!grepl(pattern = "7p6z", estimate_paths)]
 
 estimates = mclapply(estimate_paths, function(estimate_path){
   estimate = fread(estimate_path)
@@ -71,15 +81,12 @@ estimates = mclapply(estimate_paths, function(estimate_path){
   estimate$group = gsub(name, pattern = "(.*)_(\\d+)", replacement = "\\1")
   estimate$name = gsub(name, pattern = "(.*)_(\\d+)", replacement = "\\2")
   estimate
-}, mc.cores = 8)
+}, mc.cores = 4)
 estimates = rbindlist(estimates)
+# fwrite(estimates, "/Users/vmaurer/src/ribosomeSpheres/mappings_15192_sphere.csv") 
 
-# estimatesTotal = fread("/Users/vmaurer/src/ribosomeSpheres/mappings.csv")
-# keep = colnames(estimates)
-# estimates = rbind(estimates, estimatesTotal[, ..keep])
-# fwrite(estimates, "/Users/vmaurer/src/ribosomeSpheres/mappingsNew.csv")
+estimates = fread("/Users/vmaurer/src/ribosomeSpheres/mappings_15192_sphere.csv")
 
-estimates = fread("/Users/vmaurer/src/ribosomeSpheres/mappingsNew.csv")
 
 estimates[, name := as.numeric(name)]
 estimates[, Class := factor(group, levels = levels, labels = labels)]
@@ -129,7 +136,7 @@ p2 = ggplot(plot_data, aes(x = name, y = precision, group = Class, color = Class
   geom_point(size = 3)+
   geom_line(linewidth = 1.5)+
   ylab("true postives")+
-  scale_color_brewer(name = "Template", palette = "Set1")+
+  scale_color_manual(name = "Template", values = colorMapping)+
   theme_bw(base_size = FONT_SIZE)+
   xlab("Template radius [Voxel]")+
   scale_y_continuous(labels = scales::percent)+
@@ -141,7 +148,6 @@ p3 = ggplot(plot_data[tp > 0, mean(tp), by = .(Class, name)],
             aes(x = name, y = V1, group = Class, color = Class))+
   geom_point(size = 3)+
   geom_line(linewidth = 1.5)+
-  ylab("true postives")+
   scale_color_brewer(name = "Template", palette = "Set1")+
   theme_bw(base_size = FONT_SIZE)+
   xlab("Template radius")+
@@ -174,14 +180,9 @@ middle = cowplot::plot_grid(plotlist = list(p2, p3), labels = c("B", "C"), label
 lower = cowplot::plot_grid(plotlist = list(p4), labels = c("D"), label_size = 20)
 total = cowplot::plot_grid(plotlist = list(upper, middle), nrow = 2, labels = NA)
 
-ggsave("/Users/vmaurer/src/ribosomeSpheres/plots/templateMatchingRibosome.pdf",
-       total, width = 16, height = 12)
-total = cowplot::plot_grid(plotlist = list(upper, middle, lower), nrow = 3, labels = NA)
-ggsave("/Users/vmaurer/src/ribosomeSpheres/plots/templateMatchingRibosomeTotalPicking.pdf",
-       total, width = 16, height = 18)
 
 
-radialAverages = fread("/Users/vmaurer/Desktop/radialAverages.tsv")
+radialAverages = fread("radialAverages.tsv")
 bins = sort(unique(radialAverages$bin))
 vals = seq(min(bins), max(bins), .1)
 
@@ -197,22 +198,12 @@ sphereTheory = data.table(
 )
 max_value = max(sphereTheory$value, na.rm = T)
 sphereTheory[is.na(value), value := max_value]
-# rectangleTheory = data.table(
-#   class = "Rectangle [Theory]", bin = vals, value = abs(besselJ(vals, nu = 0)**3)
-# )
-# rectangleTheory[is.na(value), value := 1]
 
 radialAverages = rbindlist(list(radialAverages, sphereTheory))
 radialAverages[, value := (value - min(value))/(max(value) - min(value)), by = class]
 
-radialAverages[, Class := factor(class, 
-                                 levels = c("ribosome", "sphere", "emoji", "Sphere [Theory]", "Rectangle [Theory]"), 
-                                 labels = c("Ribosome (EMD-3228)", "Sphere", "Emoji", "Sphere [Theory]", "Rectangle [Theory]"))
-]
-radialAverages[, Linetype := factor(class, 
-                                 levels = c("ribosome", "sphere", "emoji", "Sphere [Theory]", "Rectangle [Theory]"), 
-                                 labels = c("Practical", "Practical", "Practical", "Theory", "Theory"))
-]
+radialAverages[, Class := factor(class, levels, labels)]
+radialAverages[, Linetype := factor(class, levels, labels)]
 radialAverages[grepl(pattern = "theory", ignore.case = T, class), Linewidth := 1.5]
 radialAverages[!grepl(pattern = "theory", ignore.case = T, class), Linewidth := 1]
 plot_data = radialAverages[bin < 10]
@@ -222,7 +213,7 @@ p6 = ggplot(plot_data, aes(x = bin, y = value, color = Class))+
   geom_line(data = plot_data[grepl(pattern = "theory", ignore.case = T, class)],
             linetype = "twodash", linewidth = 2)+
   geom_point(data = plot_data[!grepl(pattern = "theory", ignore.case = T, class)], size = 3)+
-  scale_color_brewer(name = "Template", palette = "Set1")+
+  scale_color_manual(name = "Template", values = colorMapping)+
   ylab("Power spectrum average")+
   xlab("Radius [Voxel]")+
   scale_y_continuous(labels = scales::percent)+
@@ -231,8 +222,7 @@ p6 = ggplot(plot_data, aes(x = bin, y = value, color = Class))+
   theme(legend.position = "bottom")+
   guides(linetype = FALSE)
 p6
-ggsave("/Users/vmaurer/src/ribosomeSpheres/plots/radialAverages.pdf",
-       p6, width = 8, height = 6)
+ggsave("plots/radialAverages.pdf", p6, width = 8, height = 6)
 
 lgd = cowplot::get_legend(p6)
 middle = cowplot::plot_grid(plotlist = list(
@@ -242,5 +232,65 @@ middle = cowplot::plot_grid(plotlist = list(
 middleTotal = cowplot::plot_grid(plotlist = list(middle, lgd), nrow = 2, rel_heights = c(.9, .1))
 middle = cowplot::plot_grid(plotlist = list(p2, p6), labels = c("B", "C"), label_size = 20)
 total = cowplot::plot_grid(plotlist = list(upper, middleTotal, lower), nrow = 3, labels = NA)
-cowplot::ggsave2("/Users/vmaurer/src/ribosomeSpheres/plots/templateMatchingRibosomeTotal.pdf",
+cowplot::ggsave2("plots/templateMatchingRibosomeTotal.pdf",
        total, width = 16, height = 18)
+
+ggsave("plots/precisionByTemplate.pdf", p2_tac, width = 8, height = 7)
+
+
+
+high_angles_sphere = fread("mappings_15192_sphere.csv")
+low_angles_cube = fread("mappings_980_cube.csv")
+low_angles_sphere = fread("mappings_980_sphere.csv")
+
+high_angles_sphere[, panel := "A"]
+low_angles_sphere[, panel := "B"]
+low_angles_cube[, panel := "C"]
+
+plots = lapply(list(high_angles_sphere, low_angles_sphere, low_angles_cube), function(estimates){
+  estimates$name = as.numeric(estimates$name)
+  estimates[, Class := factor(group, levels = levels, labels = labels)]
+  estimates = estimates[!is.na(Class)]
+  
+  estimates[is.na(distance), distance := DISTANCE_CUTOFF * 10]
+  estimates[is.na(distanceBoth), distanceBoth := DISTANCE_CUTOFF * 10]
+  estimates[is.na(assignmentClass), assignmentClass := ""]
+  plot_data = estimates[
+    , .(tp = sum(distance < DISTANCE_CUTOFF), 
+        fp = sum(distance >= DISTANCE_CUTOFF)
+    ), by = .(Class, name, panel)
+  ]
+  plot_data[, recall := tp / nrow(ground_truth), by = .(Class, name)]
+  plot_data[, precision := tp / (tp + fp), by = .(Class, name)]
+  ggplot(plot_data, aes(x = name, y = precision, group = Class, color = Class))+
+    geom_point(size = 3)+
+    geom_line(linewidth = 1.5)+
+    scale_color_manual(name = "Template", values = colorMapping)+
+    theme_bw(base_size = FONT_SIZE)+
+    xlab("Template radius [Voxel]")+
+    scale_y_continuous(labels = scales::percent)+
+    scale_x_continuous(breaks = c(min(plot_data$name), 5, 10, 15, max(plot_data$name)))+
+    ylab("Precision")+
+    theme(legend.position = "bottom")
+})
+lgd = cowplot::get_legend(plots[[1]])
+
+total = precision_comparison = cowplot::plot_grid(plotlist = list(
+  plots[[1]] + theme(
+    legend.position = "None", 
+    axis.title.x = element_text(color = "#FFFFFF"), 
+    axis.ticks.x = element_line(color = "#FFFFFF"), 
+    axis.text.x = element_text(color = "#FFFFFF")
+  ),
+  plots[[2]] + theme(
+    legend.position = "None", 
+    axis.title.x = element_text(color = "#FFFFFF"), 
+    axis.ticks.x = element_line(color = "#FFFFFF"), 
+    axis.text.x = element_text(color = "#FFFFFF")
+  ),
+  plots[[3]] + theme(legend.position = "None"),
+  lgd
+  ),nrow = 4, ncol = 1, labels = c("A", "B", "C", ""), rel_heights = c(.9,.9,.9,.1), label_fontface = "bold", label_size = FONT_SIZE)
+cowplot::ggsave2("plots/templateMatchingPrecisionComparison.pdf",
+                 total, width = 16, height = 18)
+

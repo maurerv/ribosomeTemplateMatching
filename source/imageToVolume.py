@@ -1,4 +1,4 @@
-from dge import Map, ProteinBlurrer
+from tme import Density, Preprocessor
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 import matplotlib.pyplot as plt
@@ -31,7 +31,7 @@ plt.show()
 output_volume = np.zeros((font_size, font_size, font_size))
 output_volume[font_size // 2, :, :] = np.array(img)
 output_volume = output_volume.astype(np.float32)
-image_map = Map(fullMap = output_volume, apix = 1, origin = (0,0,0))
+image_map = Density(fullMap = output_volume, apix = 1, origin = (0,0,0))
 output_map = image_map.empty
 
 # image_map.write_map("image.mrc")
@@ -43,10 +43,10 @@ for angle in range(0, 361, 1):
         center_rotation = True,
         threshold = 0
     )
-blurrer = ProteinBlurrer()
+blurrer = Preprocessor()
 output_map.fullMap[output_map.fullMap > 0] = 1
-output_map.fullMap = blurrer.gaussian_blur(
-    template = output_map.fullMap, apix = 1, sigma = 1
+output_map.fullMap = blurrer.gaussian_filter(
+    template = output_map.fullMap, sigma = 1
 )
 output_map.write_map("../templates/volume.mrc")
 output_map = output_map.resample(8)
