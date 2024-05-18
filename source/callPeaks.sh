@@ -9,7 +9,7 @@
 #SBATCH --partition=htc-el8
 
 source $HOME/.bashrc
-BASE_DIR="/g/kosinski/vmaurer/ribosomePaper/templates"
+
 dirs=( $BASE_DIR/*/ )
 dir=${dirs[$SLURM_ARRAY_TASK_ID-1]}
 dir=${dir%*/}      # remove the trailing "/"

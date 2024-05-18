@@ -13,20 +13,24 @@ import argparse
 import numpy as np
 from skimage.feature import peak_local_max
 
+
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Call Peaks on pytom output.")
+    parser = argparse.ArgumentParser(description="Call Peaks on pytom output.")
     parser.add_argument(
-        "--outpath", type=str, required=True,
-        help="Path to the output file.")
+        "--outpath", type=str, required=True, help="Path to the output file."
+    )
     parser.add_argument(
-        "--TMdir", type=str, required=True,
-        help="Path to the template matching directory.")
+        "--TMdir",
+        type=str,
+        required=True,
+        help="Path to the template matching directory.",
+    )
     parser.add_argument(
-        "--scoresname", type=str, required=True,
-        help="Name of the scores file.")
+        "--scoresname", type=str, required=True, help="Name of the scores file."
+    )
     args = parser.parse_args()
     return args
+
 
 # read_em from frosina
 def read_em(path_to_emfile):
@@ -66,6 +70,7 @@ def read_em(path_to_emfile):
             value = value[0, :, :]
     return header, value
 
+
 if __name__ == "__main__":
     args = parse_args()
 
@@ -87,9 +92,7 @@ if __name__ == "__main__":
         )
         coordinates = sorted(coordinates, key=lambda x: scores[tuple(x)], reverse=True)
         lines = [
-            f"{x}\t{y}\t{z}\t{scores[z,y,x]}\t{TMdir}\n"
-            for z, y, x in coordinates
+            f"{x}\t{y}\t{z}\t{scores[z,y,x]}\t{TMdir}\n" for z, y, x in coordinates
         ]
         starout.writelines(lines)
     print(f"Finished processing {TMdir}")
-

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 rsync -am --progress \
-  --include='coordinates.tsv' \
+  --include='coordinates_annotated.tsv' \
   --include='*/' \
   --exclude='*' \
-  embl:/g/kosinski/vmaurer/ribosomePaper/templates ../
+  "embl:/g/kosinski/vmaurer/ribosomePaper/templates_*" ../
