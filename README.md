@@ -5,7 +5,7 @@ The code and data in this repository were used in the following publication:
 ## Contents
 
 - **particle_lists**: Ground truth particle lists.
-- **mappings_***.csv: Picked ribosome coordinates.
-- **source**: Source code for analyses.
 - **plots**: Plots generated for publication.
-- **templates**: Structural templates used in analyses.
+- **source**: Source code for analyses.
+- **templates**: Templates used for template matching.
+- **templates_\***: Template matching results by tool and number of angles.
