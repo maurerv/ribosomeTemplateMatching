@@ -1,6 +1,6 @@
 The code and data in this repository were used in the following publication:
-- [The Shape of Things in Cryo-ET: Why Emojis Aren’t Just for Texts
-](https://www.biorxiv.org/content/10.1101/2023.09.06.556487v1)
+- [What shapes template-matching performance in cryogenic electron
+tomography in situ?](https://doi.org/10.1107/S2059798324004303)
 
 ## Contents
 
